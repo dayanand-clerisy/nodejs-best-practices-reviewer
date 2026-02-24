@@ -21,7 +21,7 @@ Review code against the [goldbergyoni/nodebestpractices](https://github.com/gold
     gh pr checkout <PR_NUMBER>
     ```
 2.  **Identify Changes**:
-    *   List changed files: `gh pr diff <PR_NUMBER> --stat`
+    *   List changed files: `gh pr diff <PR_NUMBER> --name-only`
     *   Get the base branch: `gh pr view <PR_NUMBER> --json baseRefName -q .baseRefName`
     *   Read full diff of source files (skip lockfiles):
         ```bash
