@@ -20,11 +20,22 @@ Review code against the [goldbergyoni/nodebestpractices](https://github.com/gold
     ```bash
     gh pr checkout <PR_NUMBER>
     ```
-2.  **Preflight**: Run the project's verification suite to catch automated failures early.
+2.  **Identify Changes**:
+    *   List changed files: `gh pr diff <PR_NUMBER> --stat`
+    *   Get the base branch: `gh pr view <PR_NUMBER> --json baseRefName -q .baseRefName`
+    *   Read full diff of source files (skip lockfiles):
+        ```bash
+        git diff <BASE_BRANCH>...HEAD -- '*.ts' '*.js' '*.cjs' '*.mjs' '*.json' ':!*lock*' ':!*yarn.lock'
+        ```
+    *   For large PRs, read the changed source files individually using the file paths from the stat output.
+3.  **Context**: Read the PR description and existing comments to understand intent.
+    ```bash
+    gh pr view <PR_NUMBER>
+    ```
+4.  **Preflight**: Run the project's verification suite to catch automated failures early.
     ```bash
     npm run preflight
     ```
-3.  **Context**: Read the PR description and existing comments to understand intent.
 
 #### For Local Changes:
 1.  **Identify Changes**:
