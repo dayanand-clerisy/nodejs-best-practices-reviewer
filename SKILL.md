@@ -1,0 +1,124 @@
+---
+name: nodejs-best-practices-reviewer
+description: Review Node.js code against goldbergyoni/nodebestpractices standards (102 practices across architecture, error handling, code style, testing, production, security, performance, and Docker). Supports both local changes and remote Pull Requests. Use when the user asks to review code, a PR, or local changes for Node.js best practices compliance. Triggers on requests like "review this PR for Node.js best practices", "check my code against best practices", "review my changes", or "nodejs review PR #123".
+---
+
+# Node.js Best Practices Reviewer
+
+Review code against the [goldbergyoni/nodebestpractices](https://github.com/goldbergyoni/nodebestpractices) standards — 102 practices across 8 sections.
+
+## Workflow
+
+### 1. Determine Review Target
+*   **Remote PR**: If the user provides a PR number or URL (e.g., "review PR #123"), target that remote PR.
+*   **Local Changes**: If no specific PR is mentioned, or if the user asks to "review my changes", target the current local file system states (staged and unstaged changes).
+
+### 2. Preparation
+
+#### For Remote PRs:
+1.  **Checkout**: Use the GitHub CLI to checkout the PR.
+    ```bash
+    gh pr checkout <PR_NUMBER>
+    ```
+2.  **Preflight**: Run the project's verification suite to catch automated failures early.
+    ```bash
+    npm run preflight
+    ```
+3.  **Context**: Read the PR description and existing comments to understand intent.
+
+#### For Local Changes:
+1.  **Identify Changes**:
+    *   Check status: `git status`
+    *   Read diffs: `git diff` (working tree) and/or `git diff --staged` (staged).
+2.  **Preflight (Optional)**: If changes are substantial, ask whether to run `npm run preflight` first.
+
+### 3. Load Relevant Practice References
+
+Based on the files and patterns in the diff, load the applicable reference files:
+
+*   **Architecture/structure changes** → [references/architecture.md](references/architecture.md)
+*   **Error handling, try-catch, logging** → [references/error-handling.md](references/error-handling.md)
+*   **Code style, naming, imports** → [references/code-style.md](references/code-style.md)
+*   **Test files or test patterns** → [references/testing.md](references/testing.md)
+*   **Config, deployment, CI/CD** → [references/production.md](references/production.md)
+*   **Auth, input validation, secrets** → [references/security.md](references/security.md)
+*   **Performance, Docker** → [references/performance-and-docker.md](references/performance-and-docker.md)
+
+Load only the references relevant to the changes being reviewed. For a typical PR, 2-4 reference files are sufficient.
+
+### 4. In-Depth Analysis
+
+Evaluate code against the standard code-review pillars AND the Node.js best practices:
+
+#### Standard Review Pillars
+*   **Correctness**: Does the code achieve its stated purpose without bugs?
+*   **Maintainability**: Clean, well-structured, easy to modify?
+*   **Readability**: Consistently formatted, appropriately commented?
+*   **Efficiency**: Any performance bottlenecks?
+*   **Security**: Any vulnerabilities or insecure practices?
+*   **Edge Cases and Error Handling**: Proper handling of failures?
+*   **Testability**: Adequate test coverage?
+
+#### Node.js Best Practices Checks
+
+For each changed file, check against the relevant practices from the loaded references. Key areas to always check:
+
+**Error Handling (high impact)**
+- Custom Error classes extending Error (not throwing strings/objects)
+- Centralized error handler (not per-route error handling)
+- Async-await with proper try-catch (not unhandled promises)
+- `return await` before returning promises (full stack traces)
+- EventEmitter/stream `error` event subscriptions
+
+**Security (high impact)**
+- No `eval()`, `new Function()`, dynamic `require()` from user input
+- Input validation at API boundaries (ajv/zod/typebox)
+- Parameterized queries (no string interpolation in SQL)
+- Secrets not hardcoded or committed
+- Security headers (Helmet.js)
+- Rate limiting on public endpoints
+
+**Code Style**
+- `const` over `let`; no `var`
+- Strict equality (`===`)
+- Imports at file top, not inside functions
+- Named functions for complex callbacks
+- No side effects at module scope
+- `node:` protocol for built-in imports
+
+**Architecture**
+- Business-domain component structure (not technical-role grouping)
+- Three-tier separation (controller → service → data-access)
+- Web objects (`req`/`res`) not leaking into business logic
+- Environment config via validated, hierarchical config (not hardcoded)
+
+**Testing** (when test files are in the diff)
+- Three-part test names: `[unit] [scenario] [expected]`
+- AAA pattern (Arrange, Act, Assert)
+- No global test fixtures; each test owns its data
+- External HTTP services mocked (nock/Mock-Server)
+- All 5 outcomes tested (response, state, external calls, queue messages, observability)
+
+**Production Readiness**
+- Structured logging (Pino/Winston, not console.log)
+- `package-lock.json` committed
+- Graceful shutdown handling (SIGTERM)
+- Stateless design (no in-process sessions/caches)
+
+### 5. Provide Feedback
+
+#### Structure
+*   **Summary**: High-level overview of the review and overall Node.js best practices compliance.
+*   **Findings**:
+    *   **Critical**: Bugs, security issues, breaking changes, or severe best-practice violations.
+    *   **Best Practice Violations**: Specific practices violated with practice ID (e.g., "2.12 — Always await before returning"). Include the *why* and a fix suggestion.
+    *   **Improvements**: Suggestions for better quality or performance.
+    *   **Nitpicks**: Minor style issues (optional).
+*   **Practices Followed Well**: Acknowledge areas where the code follows best practices effectively.
+*   **Conclusion**: Clear recommendation (Approved / Request Changes).
+
+#### Tone
+*   Be constructive, professional, and friendly.
+*   Reference specific practice IDs (e.g., "Per practice 6.10, validate incoming JSON schemas at API boundaries").
+*   Explain *why* a change is requested — link to the underlying principle.
+*   For approvals, acknowledge the specific value of the contribution.
